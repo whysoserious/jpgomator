@@ -2,46 +2,68 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-// running in fullscreen
-// command line args
-// my directory
-// State.toString
-// center image
 // logo
-// flagi:
-//  -fullscreen
-//  -size
-//  -background-color
-//  -help
-//  -logo-file
-//  -file-extensions
-//  -file-name-regex
-//  -path
-//  -framerate
-//  -logo-position
 
 class State {
-  int framerate = 1;
-  //  String path = ".";
-String path = "/Users/jan/Pictures";
-  String fileRegex = "^.*\\.(jpg|jpeg|png|gif)$";
-  color backgroundColor = 0;
+
+  int framerate;
+  String path;
+  String fileRegex;
+  color backgroundColor;
+  boolean fullscreen;
+  int sX;
+  int sY;
+  File logoFile;
+  String logoPosition;
+  
   long lastModified = 0;
   String newestFileName = null;
-  File logo = new File("/Users/jan/Pictures/sasha.png");
-  FileFilter imgFilter = new FileFilter() {
-      private Pattern pattern = Pattern.compile(fileRegex);
-      public boolean accept(File file) {
-        println(file.getAbsolutePath());
-        if (logo != null && logo.getAbsolutePath().equals(file.getAbsolutePath())) {
-          return false;
-        } else {
-          return pattern.matcher(file.getName().toLowerCase()).matches();
-        }
-      }
-    };
-  PImage logoImg = null;
+  PImage logo = null;
+  
+  FileFilter imgFilter;
 
+  State() {
+    try {
+      Properties p = new Properties();
+      InputStream is = new FileInputStream("config.properties");
+      p.load(is);
+      is.close();
+
+      fullscreen = boolean(p.getProperty("fullscreen"));
+      if (!fullscreen) {
+        sX = int(p.getProperty("width"));
+        sY = int(p.getProperty("height"));
+      }
+      framerate = int(p.getProperty("framerate"));
+      path = p.getProperty("path");
+      fileRegex = p.getProperty("filename-regex");
+      backgroundColor = int(p.getProperty("background-color"));
+      String logoFileName = p.getProperty("logo-file");
+      if (logoFileName == null) {
+        logoFile = null;
+        logo = null;
+      } else {
+        logoFile = new File(logoFileName);
+        logo = loadImage(logoFileName);
+      }
+      logoPosition = p.getProperty("logo-position");
+      
+      imgFilter = new FileFilter() {
+          private Pattern pattern = Pattern.compile(fileRegex);
+          public boolean accept(File file) {
+            if (logoFile != null && logoFile.getAbsolutePath().equals(file.getAbsolutePath())) {
+              return false;
+            } else {
+              return pattern.matcher(file.getName().toLowerCase()).matches();
+            }
+          }
+        };
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
 
 }
 
@@ -49,7 +71,11 @@ State state;
 
 void setup() {
   state = new State();
-  size(70, 50);
+  if (state.fullscreen) {
+    size(displayWidth, displayHeight);
+  } else {
+    size(state.sX, state.sY);
+  }
   background(state.backgroundColor);
   frameRate(state.framerate);
 }
@@ -66,7 +92,6 @@ Properties loadCommandLine () {
 
 String findNewestFile() {
   File path = new File(state.path);
-  println ("PATH: " + path.getAbsolutePath());
   File[] files = path.listFiles(state.imgFilter);
   long lastModified = 0;
   String newestFileName = null;
@@ -82,7 +107,6 @@ String findNewestFile() {
 
 void showImage(String fileName) {
   PImage img = loadImage(fileName);
-  println("WIDTH: " + img.width + " HEIGHT: " + img.height);
   // calculate new size of the image
   int w = img.width;
   int h = img.height;
@@ -107,7 +131,6 @@ void showImage(String fileName) {
 
 void draw() {
   String newestFileName = findNewestFile();
-  println("TICK: " + newestFileName);
   if (newestFileName != null &&
       (state.newestFileName == null || !state.newestFileName.equals(newestFileName))) {
     state.newestFileName = newestFileName;
