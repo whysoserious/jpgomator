@@ -2,8 +2,6 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-// logo
-
 class State {
 
   int framerate;
@@ -13,8 +11,6 @@ class State {
   boolean fullscreen;
   int sX;
   int sY;
-  File logoFile;
-  String logoPosition;
   
   long lastModified = 0;
   String newestFileName = null;
@@ -23,6 +19,7 @@ class State {
   FileFilter imgFilter;
 
   State() {
+    println("PWD is: [" + (new File(".").getAbsolutePath()) + "]");
     try {
       Properties p = new Properties();
       InputStream is = new FileInputStream("config.properties");
@@ -38,24 +35,11 @@ class State {
       path = p.getProperty("path");
       fileRegex = p.getProperty("filename-regex");
       backgroundColor = int(p.getProperty("background-color"));
-      String logoFileName = p.getProperty("logo-file");
-      if (logoFileName == null) {
-        logoFile = null;
-        logo = null;
-      } else {
-        logoFile = new File(logoFileName);
-        logo = loadImage(logoFileName);
-      }
-      logoPosition = p.getProperty("logo-position");
       
       imgFilter = new FileFilter() {
           private Pattern pattern = Pattern.compile(fileRegex);
-          public boolean accept(File file) {
-            if (logoFile != null && logoFile.getAbsolutePath().equals(file.getAbsolutePath())) {
-              return false;
-            } else {
-              return pattern.matcher(file.getName().toLowerCase()).matches();
-            }
+          public boolean accept(File file) {           
+              return pattern.matcher(file.getName().toLowerCase()).matches();            
           }
         };
       
@@ -93,6 +77,9 @@ Properties loadCommandLine () {
 String findNewestFile() {
   File path = new File(state.path);
   File[] files = path.listFiles(state.imgFilter);
+  if (files == null || files.length == 0) {
+    return null;
+  }
   long lastModified = 0;
   String newestFileName = null;
   for (int i = 0; i < files.length; ++i) {
@@ -129,7 +116,7 @@ void showImage(String fileName) {
   image(img, pw, ph);
 }
 
-void draw() {
+void draw() {  
   String newestFileName = findNewestFile();
   if (newestFileName != null &&
       (state.newestFileName == null || !state.newestFileName.equals(newestFileName))) {
@@ -137,5 +124,4 @@ void draw() {
     showImage(state.newestFileName);
   }
 }
-
 
