@@ -11,10 +11,12 @@ class State {
   boolean fullscreen;
   int sX;
   int sY;
+  int fadeTime;
   
   long lastModified = 0;
   String newestFileName = null;
   PImage logo = null;
+  int frames = 0;
   
   FileFilter imgFilter;
 
@@ -22,7 +24,8 @@ class State {
     println("PWD is: [" + (new File(".").getAbsolutePath()) + "]");
     try {
       Properties p = new Properties();
-      InputStream is = new FileInputStream("config.properties");
+      InputStream is = new FileInputStream("/Users/jan/Dev/jpgomat/config.properties");
+      //      InputStream is = new FileInputStream("config.properties");
       p.load(is);
       is.close();
 
@@ -35,6 +38,7 @@ class State {
       path = p.getProperty("path");
       fileRegex = p.getProperty("filename-regex");
       backgroundColor = int(p.getProperty("background-color"));
+      fadeTime = int(p.getProperty("fade-time"));
       
       imgFilter = new FileFilter() {
           private Pattern pattern = Pattern.compile(fileRegex);
@@ -114,6 +118,8 @@ void showImage(String fileName) {
   background(state.backgroundColor);
   // draw image
   image(img, pw, ph);
+  // reset counter
+  state.frames = 0;
 }
 
 void draw() {  
@@ -122,6 +128,10 @@ void draw() {
       (state.newestFileName == null || !state.newestFileName.equals(newestFileName))) {
     state.newestFileName = newestFileName;
     showImage(state.newestFileName);
+  }
+  ++state.frames;
+  if (state.frames > state.fadeTime) {
+    background(state.backgroundColor);
   }
 }
 
