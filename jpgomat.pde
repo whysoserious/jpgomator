@@ -24,8 +24,8 @@ class State {
     println("PWD is: [" + (new File(".").getAbsolutePath()) + "]");
     try {
       Properties p = new Properties();
-      InputStream is = new FileInputStream("/Users/jan/Dev/jpgomat/config.properties");
-      //      InputStream is = new FileInputStream("config.properties");
+      //InputStream is = new FileInputStream("/Users/jan/Dev/jpgomat/config.properties");
+      InputStream is = new FileInputStream("config.properties");
       p.load(is);
       is.close();
 
